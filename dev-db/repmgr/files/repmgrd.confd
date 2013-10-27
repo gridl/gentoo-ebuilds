@@ -1,0 +1,7 @@
+# /etc/conf.d/repmgr
+
+# Defaults
+REPMGRD_CONF="/etc/repmgr.conf"
+REPMGRD_PIDFILE="/run/repmgrd.pid"
+REPMGRD_USER="postgres"
+REPMGRD_BINARY="/usr/bin/repmgrd"

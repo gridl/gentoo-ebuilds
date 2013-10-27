@@ -1,0 +1,45 @@
+#!/sbin/runscript
+# Copyright 1999-2012 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: $
+
+depend() {
+	need net
+	use postgresql dns
+}
+
+REPMGRD_CONF=${REPMGRD_CONF:-/etc/${SVCNAME}.conf}
+REPMGRD_PIDFILE=${REPMGRD_PIDFILE:-/run/${SVCNAME}.pid}
+REPMGRD_USER=${REPMGRD_USER:-postgres}
+REPMGRD_BINARY=${REPMGRD_BINARY:-/usr/bin/repmgrd}
+
+checkconfig() {
+	if [ ! -f ${REPMGRD_CONF} ] ; then
+		eerror "Please create ${REPMGRD_CONF}"
+		eerror "Sample conf: /usr/share/doc/repmgr-1.2.0/repmgr.conf.sample"
+		return 1
+	fi
+	return 0
+}
+
+start() {
+	checkconfig || return $?
+
+	ebegin "Starting ${SVCNAME}"
+	start-stop-daemon --start --background --exec "${REPMGRD_BINARY}" \
+		--make-pidfile --pidfile "${REPMGRD_PIDFILE}" \
+		--user "${REPMGRD_USER}" \
+		-- -f "${REPMGRD_CONF}"
+	eend $?
+}
+
+stop() {
+	if [ "${RC_CMD}" = "restart" ] ; then
+		checkconfig || return 1
+	fi
+
+	ebegin "Stopping ${SVCNAME}"
+	start-stop-daemon --stop --exec "${REPMGRD_BINARY}" \
+		--pidfile "${REPMGRD_PIDFILE}"
+	eend $?
+}
