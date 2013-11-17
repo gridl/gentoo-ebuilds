@@ -6,7 +6,7 @@ EAPI=5
 
 PYTHON_COMPAT=( python2_7 )
 
-inherit distutils-r1
+inherit bash-completion-r1 distutils-r1
 
 DESCRIPTION="Load and performance benchmark tool"
 HOMEPAGE="http://clubs.ya.ru/yandex-tank/"
@@ -16,7 +16,7 @@ SRC_URI="https://github.com/yandex-load/yandex-tank/tarball/${GIT_SHA1} -> ${P}.
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE=""
+IUSE="jmeter bash-completion"
 
 PYTHON_DEPEND="2:2.7"
 
@@ -24,7 +24,8 @@ DEPEND=">=dev-lang/python-2.7
 	dev-python/psutil
 	dev-python/ipaddr
 	dev-python/lxml
-	app-misc/phantom"
+	app-misc/phantom
+	jmeter? ( app-benchmarks/jmeter )"
 
 RDEPEND="${DEPEND}"
 S="${WORKDIR}/yandex-load-yandex-tank-${GIT_SHA1}"
@@ -40,6 +41,16 @@ python_install() {
 	cp ${S}/Tank/Plugins/*.{tpl,xml,txt,html} ${D}/usr/lib/python2.7/site-packages/Tank/Plugins/
 
 	newbin ${S}/tank.py yandex-tank
+	newbin ${S}/ab.sh yandex-tank-ab
+	
+	if use jmeter; then
+		newbin ${S}/jmeter.sh yandex-tank-jmeter
+	fi
+
+	if use bash-completion; then
+		newbashcomp yandex-tank.completion yandex-tank
+	fi
+
 	dodir /etc/yandex-tank
 	insinto /etc/yandex-tank
 		doins ${FILESDIR}/load.ini
