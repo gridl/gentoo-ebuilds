@@ -4,9 +4,9 @@
 
 EAPI=5
 
-PYTHON_COMPAT=( python2_7 )
+PYTHON_COMPAT=( python2_{6,7} )
 
-inherit bash-completion-r1 distutils-r1
+inherit bash-completion-r1 python-r1
 
 DESCRIPTION="Load and performance benchmark tool"
 HOMEPAGE="http://clubs.ya.ru/yandex-tank/"
@@ -16,33 +16,33 @@ SRC_URI="https://github.com/yandex-load/yandex-tank/tarball/${GIT_SHA1} -> ${P}.
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE="jmeter bash-completion"
+IUSE="bash-completion jmeter mysql postgres"
 
 PYTHON_DEPEND="2:2.7"
 
-DEPEND=">=dev-lang/python-2.7
+RDEPEND="${PYTHON_DEPS}
+	dev-python/progressbar
 	dev-python/psutil
 	dev-python/ipaddr
 	dev-python/lxml
 	app-misc/phantom
-	jmeter? ( app-benchmarks/jmeter )"
+	jmeter? ( app-benchmarks/jmeter )
+	mysql? ( dev-python/sqlalchemy[mysql] )
+	postgres? ( dev-python/sqlalchemy[postgres] )"
 
-RDEPEND="${DEPEND}"
+DEPEND="${RDEPEND}"
 S="${WORKDIR}/yandex-load-yandex-tank-${GIT_SHA1}"
 
-src_prepare() {
-	cp ${FILESDIR}/yandex-tank-setup.py ${S}/setup.py
-}
-
 python_install() {
-	distutils-r1_python_install
+	for mod in Tank Tank/{MonCollector,MonCollector/agent,Plugins,Plugins/bfg,stepper} tankcore.py; do
+		python_domodule $mod
+	done
+	newbin ${S}/tank.py yandex-tank
+	newbin ${S}/ab.sh yandex-tank-ab
 
 	mkdir -p ${D}/usr/lib/python2.7/site-packages/Tank/Plugins
 	cp ${S}/Tank/Plugins/*.{tpl,xml,txt,html} ${D}/usr/lib/python2.7/site-packages/Tank/Plugins/
 
-	newbin ${S}/tank.py yandex-tank
-	newbin ${S}/ab.sh yandex-tank-ab
-	
 	if use jmeter; then
 		newbin ${S}/jmeter.sh yandex-tank-jmeter
 	fi
@@ -56,6 +56,10 @@ python_install() {
 		doins ${FILESDIR}/load.ini
 		doins ${FILESDIR}/00-base.ini
 		doins ${FILESDIR}/sysctl.conf
+}
+
+src_install() {
+	python_foreach_impl python_install
 }
 
 pkg_postinst() {
