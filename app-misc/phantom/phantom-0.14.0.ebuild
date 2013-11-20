@@ -2,7 +2,9 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-EAPI=4
+EAPI=5
+
+inherit eutils toolchain-funcs
 
 DESCRIPTION="I/O engine with some modules"
 HOMEPAGE="https://github.com/yandex-load/phantom"
@@ -14,13 +16,13 @@ SLOT="0"
 KEYWORDS="~amd64"
 IUSE=""
 
-DEPEND=""
+DEPEND="<sys-devel/binutils-2.23"
 RDEPEND="${DEPEND}"
 
 S="${WORKDIR}/yandex-load-${PN}-${GIT_SHA1}"
 
 src_compile() {
-	emake -R || die "Make failed!"
+	emake -R CXX="$(tc-getCXX)" || die "Make failed!"
 }
 
 src_install() {
