@@ -1,0 +1,8 @@
+/var/log/skytools/pgqd.log {
+	su postgres postgres
+	rotate 7
+	daily
+	postrotate
+		/etc/init.d/pgqd reload &>/dev/null || true
+	endscript
+}

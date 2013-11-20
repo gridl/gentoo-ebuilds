@@ -1,0 +1,59 @@
+#!/sbin/runscript
+# Copyright 1999-2012 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: $
+
+extra_started_commands="reload"
+
+depend() {
+	need net
+	use postgresql dns logger
+}
+
+PGQD_CONF=${PGQD_CONF:-/etc/skytools/${SVCNAME}.ini}
+PGQD_PIDFILE=${PGQD_PIDFILE:-/run/skytools/${SVCNAME}.pid}
+PGQD_USER=${PGQD_USER:-postgres}
+PGQD_BINARY=${PGQD_BINARY:-/usr/bin/pgqd}
+
+checkconfig() {
+	if [ ! -f ${PGQD_CONF} ] ; then
+		eerror "Please create ${PGQD_CONF}"
+		eerror "Sample conf: /usr/share/doc/skytools3/conf/pgqd.ini.templ"
+		return 1
+	fi
+	return 0
+}
+
+start_pre() {
+        checkpath -d -m 0775 -o ${PGQD_USER}: /run/skytools
+        checkpath -d -m 0775 -o ${PGQD_USER}: /var/log/skytools
+}
+
+start() {
+	checkconfig || return $?
+
+	ebegin "Starting ${SVCNAME}"
+	start-stop-daemon --start --exec "${PGQD_BINARY}" \
+		--pidfile "${PGQD_PIDFILE}" \
+		--user "${PGQD_USER}" \
+		-- -d -q "${PGQD_CONF}"
+	eend $?
+}
+
+stop() {
+	if [ "${RC_CMD}" = "restart" ] ; then
+		checkconfig || return 1
+	fi
+
+	ebegin "Stopping ${SVCNAME}"
+	start-stop-daemon --stop --exec "${PGQD_BINARY}" \
+		--pidfile "${PGQD_PIDFILE}"
+	eend $?
+}
+
+reload() {
+	ebegin "Reloading ${SVCNAME}"
+	start-stop-daemon --signal HUP --exec "${PGQD_BINARY}" \
+		--pidfile "${PGQD_PIDFILE}"
+	eend $?
+}
